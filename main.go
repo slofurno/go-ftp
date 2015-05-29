@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	ln, err := net.Listen("tcp", ":8080")
+	ln, err := net.Listen("tcp", ":21")
 
 	if err != nil {
 		// handle error
