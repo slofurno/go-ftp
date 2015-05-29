@@ -38,7 +38,9 @@ func handleConnection(conn net.Conn) {
 			return
 		} else {
 
-			command := strings.ToLower(string(buffer[:4]))
+			rawmsg := string(buffer)
+			spc := strings.Index(rawmsg, " ")
+			command := strings.ToLower(rawmsg[:spc])
 
 			switch command {
 			case "user":
