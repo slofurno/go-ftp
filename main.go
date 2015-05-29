@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 func main() {
@@ -37,13 +38,15 @@ func handleConnection(conn net.Conn) {
 			return
 		} else {
 
-			command := string(buffer[:4])
+			command := strings.ToLower(string(buffer[:4]))
 
 			switch command {
-			case "USER":
+			case "user":
 				conn.Write([]byte("331 User name ok\r\n"))
-			case "PASS":
+			case "pass":
 				conn.Write([]byte("230 pass ok\r\n"))
+			case "opts":
+				conn.Write([]byte("200 ok\r\n"))
 
 			}
 
