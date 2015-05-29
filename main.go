@@ -36,6 +36,13 @@ func handleConnection(conn net.Conn) {
 			fmt.Println(err)
 			return
 		} else {
+
+			command := buffer[:4]
+
+			if string(command) == "USER" {
+				conn.Write([]byte("331 User name ok\r\n"))
+			}
+
 			fmt.Println(string(buffer[:length]))
 		}
 	}
