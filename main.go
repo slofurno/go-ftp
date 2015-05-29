@@ -47,7 +47,8 @@ func handleConnection(conn net.Conn) {
 				conn.Write([]byte("230 pass ok\r\n"))
 			case "opts":
 				conn.Write([]byte("200 ok\r\n"))
-
+			case "pwd":
+				conn.Write([]byte("257 ftp/\r\n"))
 			}
 
 			fmt.Println(string(buffer[:length]))
