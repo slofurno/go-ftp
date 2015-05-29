@@ -37,10 +37,14 @@ func handleConnection(conn net.Conn) {
 			return
 		} else {
 
-			command := buffer[:4]
+			command := string(buffer[:4])
 
-			if string(command) == "USER" {
+			switch command {
+			case "USER":
 				conn.Write([]byte("331 User name ok\r\n"))
+			case "PASS":
+				conn.Write([]byte("230 pass ok\r\n"))
+
 			}
 
 			fmt.Println(string(buffer[:length]))
