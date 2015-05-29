@@ -25,6 +25,8 @@ func main() {
 
 func handleConnection(conn net.Conn) {
 
+	conn.Write([]byte("220 Service ready\r\n"))
+
 	buffer := make([]byte, 1024)
 
 	for {
