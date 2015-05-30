@@ -34,6 +34,10 @@ func unixString(fi os.FileInfo) string {
 
 func main() {
 
+	test := "50,191,179,26,12,142"
+	a := strings.Split(test, ",")
+	fmt.Println(len(a))
+
 	ln, _ := net.Listen("tcp", ":21")
 
 	for {
@@ -229,7 +233,7 @@ func handleConnection(conn net.Conn) {
 				}
 			case "port":
 				arr := strings.Split(param, ",")
-				if len(arr) == 5 {
+				if len(arr) == 6 {
 					p1, _ := strconv.Atoi(arr[4])
 					p2, _ := strconv.Atoi(arr[5])
 					prt := p1*256 + p2
