@@ -74,6 +74,29 @@ func pipeFiles(conn net.Conn, recieved chan<- []byte) {
 
 }
 
+func activeMode(conn net.Conn, send <-chan []byte, recieved chan<- []byte, done <-chan struct{}) {
+	//ln, _ := net.Listen("tcp", ":"+port)
+	r := make(chan []byte)
+	defer conn.Close()
+	conn.SetDeadline(time.Time{})
+
+	go pipeFiles(conn, r)
+
+	for {
+		select {
+		case file := <-r:
+			recieved <- file
+			return
+		case toSend := <-send:
+			//fmt.Println("data channel: ", toSend)
+			conn.Write(toSend)
+		case <-done:
+			return
+		}
+	}
+
+}
+
 func passiveMode(ln net.Listener, send <-chan []byte, recieved chan<- []byte, done <-chan struct{}) {
 
 	//ln, _ := net.Listen("tcp", ":"+port)
@@ -240,12 +263,19 @@ func handleConnection(conn net.Conn) {
 					activeport = strconv.Itoa(prt)
 					activeip = arr[0] + "." + arr[1] + "." + arr[2] + "." + arr[3]
 					conn.Write([]byte("200 ok\r\n"))
+					c, err := net.Dial("tcp", activeip+":"+activeport)
+					if err != nil {
+						fmt.Println(err.Error())
+					} else {
+						done = make(chan struct{})
+						go activeMode(c, send, received, done)
+					}
+
 				} else {
 					fmt.Println("wtf mate")
 					//return error
 				}
 			case "idk":
-				net.Dial("tcp", activeip+":"+activeport)
 
 			default:
 				conn.Write([]byte("500 tevs\r\n"))
