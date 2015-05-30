@@ -117,6 +117,8 @@ func handleConnection(conn net.Conn) {
 
 	buffer := make([]byte, 1024)
 	var lastparam string
+	var activeport string
+	var activeip string
 
 	for {
 
@@ -225,6 +227,21 @@ func handleConnection(conn net.Conn) {
 				} else {
 					conn.Write([]byte("250 removed ok\r\n"))
 				}
+			case "port":
+				arr := strings.Split(param, ",")
+				if len(arr) == 5 {
+					p1, _ := strconv.Atoi(arr[4])
+					p2, _ := strconv.Atoi(arr[5])
+					prt := p1*256 + p2
+					activeport = strconv.Itoa(prt)
+					activeip = arr[0] + "." + arr[1] + "." + arr[2] + "." + arr[3]
+					conn.Write([]byte("200 ok\r\n"))
+				} else {
+					//return error
+				}
+			case "idk":
+				net.Dial("tcp", activeip+":"+activeport)
+
 			default:
 				conn.Write([]byte("500 tevs\r\n"))
 			}
