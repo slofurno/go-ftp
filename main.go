@@ -77,33 +77,28 @@ func pipeFiles(conn net.Conn, recieved chan<- []byte) {
 
 }
 
-func passiveMode(ln net.Listener, send <-chan []byte, recieved chan<- []byte, end <-chan bool) {
+func passiveMode(ln net.Listener, send <-chan []byte, recieved chan<- []byte, done <-chan struct{}) {
 
 	//ln, _ := net.Listen("tcp", ":"+port)
+	r := make(chan []byte)
+	fmt.Println("passive mode engaged on ", ln.Addr().String())
+	conn, _ := ln.Accept()
+	defer conn.Close()
+	conn.SetDeadline(time.Time{})
+
+	go pipeFiles(conn, r)
+
 	for {
-		func() {
-
-			r := make(chan []byte)
-
-			fmt.Println("awaiting next")
-			conn, _ := ln.Accept()
-			defer conn.Close()
-			conn.SetDeadline(time.Time{})
-
-			go pipeFiles(conn, r)
-
-			for {
-				select {
-				case file := <-r:
-					recieved <- file
-				case toSend := <-send:
-					fmt.Println("data channel: ", toSend)
-					conn.Write(toSend)
-				case <-end:
-					return
-				}
-			}
-		}()
+		select {
+		case file := <-r:
+			recieved <- file
+			return
+		case toSend := <-send:
+			//fmt.Println("data channel: ", toSend)
+			conn.Write(toSend)
+		case <-done:
+			return
+		}
 	}
 
 }
@@ -121,10 +116,9 @@ func handleConnection(conn net.Conn) {
 	fmt.Println(ln.Addr().Network(), ln.Addr().String())
 
 	send := make(chan []byte)
-	end := make(chan bool)
+	//end := make(chan bool)
 	received := make(chan []byte)
-
-	go passiveMode(ln, send, received, end)
+	var done chan struct{}
 
 	conn.Write([]byte("220 Service ready\r\n"))
 
@@ -172,6 +166,8 @@ func handleConnection(conn net.Conn) {
 			case "cwd":
 				conn.Write([]byte("250 ok\r\n"))
 			case "epsv":
+				done = make(chan struct{})
+				go passiveMode(ln, send, received, done)
 				conn.Write([]byte("229 Entering Extended Passive Mode (|||" + port + "|)\r\n"))
 			case "list":
 				conn.Write([]byte("150 mark\r\n"))
@@ -182,7 +178,7 @@ func handleConnection(conn net.Conn) {
 						send <- []byte(unixString(fi))
 					}
 				}
-				end <- true
+				close(done)
 				conn.Write([]byte("226 ok\r\n"))
 				//send <- []byte("-rw-r--r-- 1 owner group           213 Aug 26 16:31 test1.txt\r\n")
 				//send <- []byte("-rw-r--r-- 1 owner group           129 Aug 26 16:31 hey.txt\r\n")
@@ -210,7 +206,7 @@ func handleConnection(conn net.Conn) {
 					}
 					conn.Write([]byte("150 mark\r\n"))
 					send <- b
-					end <- true
+					close(done)
 					conn.Write([]byte("226 ok\r\n"))
 				}()
 			case "stor":
@@ -220,7 +216,7 @@ func handleConnection(conn net.Conn) {
 					f, _ := os.Create("root/" + param)
 					defer f.Close()
 					f.Write(file)
-					end <- true
+					//close(done)
 					conn.Write([]byte("226 saved\r\n"))
 				}()
 			case "rnfr":
@@ -237,7 +233,7 @@ func handleConnection(conn net.Conn) {
 					conn.Write([]byte("250 removed ok\r\n"))
 				}
 			default:
-				//conn.Write([]byte("500 tevs\r\n"))
+				conn.Write([]byte("500 tevs\r\n"))
 			}
 
 		}
