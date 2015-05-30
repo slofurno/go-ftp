@@ -34,13 +34,6 @@ func unixString(fi os.FileInfo) string {
 
 func main() {
 
-	f, _ := os.Open("root/hey.txt")
-	fi, _ := f.Stat()
-
-	line := unixString(fi)
-
-	fmt.Println(line)
-
 	ln, _ := net.Listen("tcp", ":21")
 
 	for {
