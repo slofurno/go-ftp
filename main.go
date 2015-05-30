@@ -237,6 +237,7 @@ func handleConnection(conn net.Conn) {
 					activeip = arr[0] + "." + arr[1] + "." + arr[2] + "." + arr[3]
 					conn.Write([]byte("200 ok\r\n"))
 				} else {
+					fmt.Println("wtf mate")
 					//return error
 				}
 			case "idk":
